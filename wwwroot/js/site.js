@@ -1,6 +1,6 @@
 ﻿const canvas = document.createElement("canvas")
-canvas.width = 400
-canvas.height = 400
+canvas.width = 1200
+canvas.height = 600
 canvas.style.border = "1px solid black"
 
 const ctx = canvas.getContext("2d")
@@ -18,8 +18,8 @@ ws.addEventListener('message', (msg)  => {
 
 function draw() {
   // console.log(canvas)
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, 400, 400)
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
   for(let point of gameState.points) {
     console.log(point)
     ctx.fillStyle = colors[point.user % colors.length]
@@ -33,7 +33,7 @@ function draw() {
 draw();
 document.body.append(canvas)
 
-document.addEventListener('keydown', e => {
-  ws.send(`move` + e.key.toUpperCase())
+document.addEventListener('mousemove', e => {
+    ws.send(`move `+'X:' + e.clientX.toString()+' '+'Y:'+e.clientY.toString())
   // console.log('keydown')
 })

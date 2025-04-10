@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net.WebSockets;
+using System.Numerics;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using MvcMovie.Models;
@@ -8,10 +9,11 @@ namespace MvcMovie.Controllers;
 
 record PosUpdate
 {
-    public float x { get; set; }
-    public float y { get; set; }
+    public double x { get; set; }
+    public double y { get; set; }
     public int user { get; set; }
-    public float size { get; set; }
+    public double size { get; set; }
+    public double speed { get; set; } 
     public String type { get; set; } = "pos";
 };
 
@@ -23,6 +25,8 @@ public class HomeController : Controller
     static int userGen = 0;
 
     private readonly ILogger<HomeController> _logger;
+
+    private double mouse_x = -1, mouse_y = -1;
 
     public HomeController(ILogger<HomeController> logger)
     {
@@ -73,20 +77,27 @@ public class HomeController : Controller
                 WebSocketMessageType.Text,
                 true,
                 CancellationToken.None);
+            
         }
 
     }
 
     private async Task Echo(WebSocket webSocket)
     {
+        var rand = new Random();
         PosUpdate curPos = new PosUpdate();
-        curPos.x = 10;
+        curPos.x = rand.Next(0, 1200);
         curPos.size = 20;
-        curPos.y = 10;
+        curPos.y = rand.Next(0, 600);
         curPos.user = userGen++;
+        curPos.speed = 3;
+
+        await UpdateAll();
+
+        var time_call_back = new TimerCallback(GoToMouseCoord);
+        var timer = new Timer(time_call_back, curPos, 1000, 20);
 
         posUpdates.Add(curPos);
-
 
         var buffer = new byte[1024 * 4];
         var receiveResult = await webSocket.ReceiveAsync(
@@ -97,23 +108,54 @@ public class HomeController : Controller
             String ss = Encoding.ASCII.GetString(buffer, 0, receiveResult.Count);
             Console.WriteLine("<<< " + ss);
 
+            var data = ss.Split();
+
+            if (data.First() == "move")
+            { 
+                mouse_x = double.Parse(data.ElementAt(1).Remove(0, 2));
+                mouse_y = double.Parse(data.ElementAt(2).Remove(0, 2));
+                
+            }
+
+            /*
             if (ss == "moveW") curPos.y -= 5;
             if (ss == "moveS") curPos.y += 5;
             if (ss == "moveA") curPos.x -= 5;
             if (ss == "moveD") curPos.x += 5;
             if (ss == "move+") curPos.size -= 5;
             if (ss == "move-") curPos.size += 5;
-
+            */
             await UpdateAll();
 
             receiveResult = await webSocket.ReceiveAsync(
                 new ArraySegment<byte>(buffer), CancellationToken.None);
 
         }
-
         await webSocket.CloseAsync(
             receiveResult.CloseStatus.Value,
             receiveResult.CloseStatusDescription,
             CancellationToken.None);
+    }
+
+    async void GoToMouseCoord(object obj)
+    {
+        PosUpdate curPos = (PosUpdate)obj;
+
+        if (mouse_x!=-1 && mouse_y!=-1 && Math.Pow(curPos.x - mouse_x, 2) + Math.Pow(curPos.y - mouse_y, 2) > (curPos.size*curPos.size))
+        {
+            
+            double len_vector = Math.Sqrt(Math.Pow(curPos.x - mouse_x, 2) + Math.Pow(curPos.y - mouse_y, 2));
+            var x_norm = Math.Abs(curPos.x - mouse_x) / len_vector;
+            var y_norm = Math.Abs(curPos.y - mouse_y) / len_vector;
+
+            if (mouse_x >= curPos.x) curPos.x += x_norm * curPos.speed;
+            else curPos.x -= x_norm * curPos.speed;
+            if (mouse_y >= curPos.y) curPos.y += y_norm * curPos.speed;
+            else curPos.y -= y_norm * curPos.speed;
+            
+            //curPos.x += (mouse_x - curPos.x) * curPos.size;
+            //curPos.y += (mouse_y - curPos.y) * curPos.size;
+            await UpdateAll();
+        }
     }
 }
