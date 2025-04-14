@@ -81,7 +81,15 @@ public class HomeController : Controller
         }
 
     }
-
+    async Task UpdateCurrentUserScreen(PosUpdate curPos, WebSocket ws)
+    {
+        String s = "UpdateCurrentUserScreen " + System.Text.Json.JsonSerializer.Serialize(curPos);
+        await ws.SendAsync(
+            Encoding.ASCII.GetBytes(s).ToArray(),
+            WebSocketMessageType.Text,
+            true,
+            CancellationToken.None);
+    }
     private async Task Echo(WebSocket webSocket)
     {
         PosUpdate curPos = new PosUpdate();
@@ -125,8 +133,14 @@ public class HomeController : Controller
                 Console.WriteLine(data_y);
                 
             }
+            else if (data.First() == "new_size")
+            {
+                int index = int.Parse(data.ElementAt(1));
+                double new_size = double.Parse(data.ElementAt(2).Replace('.', ','));
+                posUpdates.ElementAt(index).size = new_size;
+            } 
 
-            await UpdateAll();
+                await UpdateAll();
 
             receiveResult = await webSocket.ReceiveAsync(
                 new ArraySegment<byte>(buffer), CancellationToken.None);
@@ -175,16 +189,6 @@ public class HomeController : Controller
             await UpdateAll();
         }
     }
-    async Task UpdateCurrentUserScreen(PosUpdate curPos, WebSocket ws)
-    {
-        String s = "UpdateCurrentUserScreen "+System.Text.Json.JsonSerializer.Serialize(curPos);
-        await ws.SendAsync(
-            Encoding.ASCII.GetBytes(s).ToArray(),
-            WebSocketMessageType.Text,
-            true,
-            CancellationToken.None);
-    }
-    
     int GetRandCoord()
     {
         var rand = new Random();
