@@ -1,30 +1,20 @@
 ﻿using System.Diagnostics;
 using System.Net.WebSockets;
-using System.Numerics;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
-using MvcMovie.Models;
+using Agar.io_Alpfa.Models;
+using Agar.io_Alpfa.Entities;
 
-namespace MvcMovie.Controllers;
-
-record PosUpdate
-{
-    public double x { get; set; }
-    public double y { get; set; }
-    public int user { get; set; }
-    public double size { get; set; }
-    public double speed { get; set; } 
-    public String type { get; set; } = "pos";
-    public double mouse_x { get; set; }
-    public double mouse_y { get; set; }
-};
-
+namespace Agar.io_Alpfa.Controllers;
 public class HomeController : Controller
 {
-    static List<PosUpdate> posUpdates = new List<PosUpdate>();
+    static List<Player> Players = new List<Player>();
     static List<WebSocket> ws = new List<WebSocket>();
 
+    static Constants.Constants constants = new Constants.Constants();
+
     static int userGen = 0;
+    static List<Food> Foods = EntitiesService.GetRandFoods(constants.CirclesCount);
 
     private readonly ILogger<HomeController> _logger;
 
@@ -49,7 +39,6 @@ public class HomeController : Controller
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 
-
     [Route("/ws")]
     public async Task Get()
     {
@@ -65,133 +54,217 @@ public class HomeController : Controller
         }
     }
 
-    private static async Task UpdateAll()
+    private async Task Echo(WebSocket webSocket)
+    {
+        Player player = new Player(userGen++);
+        Players.Add(player);
+
+        var time_call_back = new TimerCallback(GoToMouseCoord);
+        var timer = new Timer(time_call_back, (player, webSocket), 0, constants.TimerPeriod);
+
+        var task_1 = LoadMap();
+        var task_2 = UpdateAll();
+        var task_3 = UpdateCurrentPlayer(player, webSocket);
+
+        Task.WaitAll(task_1, task_2, task_3);
+
+        try
+        {
+            var buffer = new byte[1024 * 4];
+            var receiveResult = await webSocket.ReceiveAsync(
+                new ArraySegment<byte>(buffer), CancellationToken.None);
+
+            while (!receiveResult.CloseStatus.HasValue)
+            {
+                String ss = Encoding.ASCII.GetString(buffer, 0, receiveResult.Count);
+
+                var data = ss.Split();
+
+                if (data.First() == "move")
+                {
+                    string data_x = data.ElementAt(1).Remove(0, 2);
+                    string data_y = data.ElementAt(2).Remove(0, 2);
+
+                    data_x = data_x.Replace('.', ',');
+                    data_y = data_y.Replace(".", ",");
+
+                    var new_x = double.Parse(data_x);
+                    var new_y = double.Parse(data_y);
+
+                    Move(player, new_x, new_y);
+
+                }
+                else if (data.First() == "new_size")
+                {
+                    int index = int.Parse(data.ElementAt(1));
+
+                    NewSize(index, player, webSocket);
+
+                }
+                else if (data.First() == "eat_food")
+                {
+                    int index = int.Parse(data.ElementAt(1));
+
+                    EatFood(index);
+                }
+                else
+                {
+                    ws.Remove(webSocket);
+                    timer.Dispose();
+                    await webSocket.CloseAsync(receiveResult.CloseStatus.Value, receiveResult.CloseStatusDescription, CancellationToken.None);
+                    return;
+                }
+
+                await UpdateAll();
+
+                receiveResult = await webSocket.ReceiveAsync(
+                    new ArraySegment<byte>(buffer), CancellationToken.None);
+
+            }
+        }
+        catch
+        {
+            ws.Remove(webSocket);
+            Console.WriteLine("резкий отрубон");
+            timer.Dispose();
+            return;
+        }
+
+    }
+    private async Task UpdateAll()
     {
         foreach (var webSocket in ws)
         {
+            String s = System.Text.Json.JsonSerializer.Serialize(Players);
 
-            String s = System.Text.Json.JsonSerializer.Serialize(posUpdates);
-            Console.WriteLine(">>> " + s);
             await webSocket.SendAsync(
                 Encoding.ASCII.GetBytes(s).ToArray(),
                 WebSocketMessageType.Text,
                 true,
                 CancellationToken.None);
-            
         }
 
     }
-    async Task UpdateCurrentUserScreen(PosUpdate curPos, WebSocket ws)
+    async Task UpdateCurrentPlayer(Player player, WebSocket ws)
     {
-        String s = "UpdateCurrentUserScreen " + System.Text.Json.JsonSerializer.Serialize(curPos);
+        String s = "UpdateCurrentPlayer " + System.Text.Json.JsonSerializer.Serialize(player);
+
         await ws.SendAsync(
             Encoding.ASCII.GetBytes(s).ToArray(),
             WebSocketMessageType.Text,
             true,
             CancellationToken.None);
     }
-    private async Task Echo(WebSocket webSocket)
+    async Task UpdateMap(Food c)
     {
-        PosUpdate curPos = new PosUpdate();
-        curPos.x = GetRandCoord();
-        curPos.size = 20;
-        curPos.y = GetRandCoord();
-        curPos.user = userGen++;
-        curPos.speed = 3;
-        curPos.mouse_x = -1;
-        curPos.mouse_y = -1;
-
-        var time_call_back = new TimerCallback(GoToMouseCoord);
-        var timer = new Timer(time_call_back, (curPos, webSocket), 1000, 20);
-
-        posUpdates.Add(curPos);
-        
-        await UpdateAll();
-
-        await UpdateCurrentUserScreen(curPos, webSocket);
-
-        var buffer = new byte[1024 * 4];
-        var receiveResult = await webSocket.ReceiveAsync(
-            new ArraySegment<byte>(buffer), CancellationToken.None);
-
-        while (!receiveResult.CloseStatus.HasValue)
+        foreach (var webSocket in ws)
         {
-            String ss = Encoding.ASCII.GetString(buffer, 0, receiveResult.Count);
-            Console.WriteLine("<<< " + ss);
-
-            var data = ss.Split();
-
-            if (data.First() == "move")
-            {
-                string data_x = data.ElementAt(1).Remove(0, 2);
-                string data_y = data.ElementAt(2).Remove(0, 2);
-                data_x = data_x.Replace('.', ',');
-                data_y = data_y.Replace(".", ",");
-                curPos.mouse_x = double.Parse(data_x);
-                curPos.mouse_y = double.Parse(data_y);
-                Console.WriteLine(data_x);
-                Console.WriteLine(data_y);
-                
-            }
-            else if (data.First() == "new_size")
-            {
-                int index = int.Parse(data.ElementAt(1));
-                double new_size = double.Parse(data.ElementAt(2).Replace('.', ','));
-                posUpdates.ElementAt(index).size = new_size;
-            } 
-
-                await UpdateAll();
-
-            receiveResult = await webSocket.ReceiveAsync(
-                new ArraySegment<byte>(buffer), CancellationToken.None);
-
+            String s = "UpdateMap " + System.Text.Json.JsonSerializer.Serialize(c);
+            await webSocket.SendAsync(
+                Encoding.ASCII.GetBytes(s).ToArray(),
+                WebSocketMessageType.Text,
+                true,
+                CancellationToken.None);
         }
-        await webSocket.CloseAsync(
-            receiveResult.CloseStatus.Value,
-            receiveResult.CloseStatusDescription,
-            CancellationToken.None);
+    }
+    async Task DeleteFood(int index)
+    {
+        foreach (var webSocket in ws)
+        {
+            String s = "DeleteFood " + System.Text.Json.JsonSerializer.Serialize(index);
+            await webSocket.SendAsync(
+                Encoding.ASCII.GetBytes(s).ToArray(),
+                WebSocketMessageType.Text,
+                true,
+                CancellationToken.None);
+        }
+    }
+    async Task LoadMap()
+    {
+        foreach (var webSocket in ws)
+        {
+            String s = "LoadMap " + System.Text.Json.JsonSerializer.Serialize(Foods);
+            await webSocket.SendAsync(
+                Encoding.ASCII.GetBytes(s).ToArray(),
+                WebSocketMessageType.Text,
+                true,
+                CancellationToken.None);
+        }
     }
 
+    async void EatFood(int index)
+    {
+        Foods.RemoveAt(index);
+        var task_1 = DeleteFood(index);
+
+        var new_food = new Food();
+
+        Foods.Add(new_food);
+        var task_2 = UpdateMap(new_food);
+
+        Task.WaitAll(task_1, task_2);
+    }
+
+    async void NewSize(int index, Player player, WebSocket webSocket)
+    {
+        Players.ElementAt(index).size += constants.FoodIncrease;
+        var task_1 = UpdateCurrentPlayer(player, webSocket);
+        Task.WaitAll(task_1);
+    }
+    async void Move(Player player, double new_x, double new_y)
+    {
+        player.mouse_x = new_x;
+        player.mouse_y = new_y;
+    }
     async void GoToMouseCoord(object obj)
     {
-        (PosUpdate, WebSocket) data = ((PosUpdate, WebSocket))obj;
+        (Player, WebSocket) data = ((Player, WebSocket))obj;
         var pos = data.Item1;
         var ws = data.Item2;
-        
-        var pos_index = posUpdates.IndexOf(pos);
-        var curPos = posUpdates[pos_index];
 
-        var mouse_x = curPos.mouse_x;
-        var mouse_y = curPos.mouse_y;
+        if (ws.State != WebSocketState.Open) return;
 
-        Console.WriteLine(curPos.x.ToString() + ' ' + curPos.y.ToString() + ' ' + mouse_x.ToString() + ' ' + mouse_y.ToString() + curPos.size.ToString());
-        if (mouse_x!=-1 && mouse_y!=-1 && Math.Pow(curPos.x - mouse_x, 2) + Math.Pow(curPos.y - mouse_y, 2) > (curPos.size*curPos.size))
+        var pos_index = Players.IndexOf(pos);
+        var player = Players[pos_index];
+
+        var mouse_x = player.mouse_x;
+        var mouse_y = player.mouse_y;
+
+        if (mouse_x != 0 && mouse_y != 0 && Math.Pow(player.x - mouse_x, 2) + Math.Pow(player.y - mouse_y, 2) > Math.Pow(constants.PlayerMinLenToMouseForMove, 2))
         {
-            
-            double len_vector = Math.Sqrt(Math.Pow(curPos.x - mouse_x, 2) + Math.Pow(curPos.y - mouse_y, 2));
-            var x_norm = Math.Abs(curPos.x - mouse_x) / len_vector;
-            var y_norm = Math.Abs(curPos.y - mouse_y) / len_vector;
 
-            if (mouse_x >= curPos.x) curPos.x += x_norm * curPos.speed;
-            else curPos.x -= x_norm * curPos.speed;
-            if (mouse_y >= curPos.y) curPos.y += y_norm * curPos.speed;
-            else curPos.y -= y_norm * curPos.speed;
+            double len_vector = Math.Sqrt(Math.Pow(player.x - mouse_x, 2) + Math.Pow(player.y - mouse_y, 2));
+            var x_norm = Math.Abs(player.x - mouse_x) / len_vector;
+            var y_norm = Math.Abs(player.y - mouse_y) / len_vector;
 
-            Console.WriteLine("изменение на: "+curPos.x.ToString() + ' ' + curPos.y.ToString());
+            if (mouse_x >= player.x)
+            {
+                player.x += x_norm * player.speed;
+                player.mouse_x += x_norm * player.speed;
+            }
+            else
+            {
+                player.x -= x_norm * player.speed;
+                player.mouse_x -= x_norm * player.speed;
+            }
 
-            posUpdates[pos_index].x = curPos.x;
-            posUpdates[pos_index].y = curPos.y;
+            if (mouse_y >= player.y)
+            {
+                player.y += y_norm * player.speed;
+                player.mouse_y += y_norm * player.speed;
+            }
+            else
+            {
+                player.y -= y_norm * player.speed;
+                player.mouse_y -= y_norm * player.speed;
+            }
 
-            Console.WriteLine("изменение на(вторая попытка): " + posUpdates[pos_index].x.ToString() + ' ' + posUpdates[pos_index].y.ToString());
+            Players[pos_index].x = player.x;
+            Players[pos_index].y = player.y;
 
-            await UpdateCurrentUserScreen(curPos, ws);
-
-            await UpdateAll();
+            var task_1 = UpdateCurrentPlayer(player, ws);
+            var task_2 = UpdateAll();
+            Task.WaitAll(task_1, task_2);
         }
-    }
-    int GetRandCoord()
-    {
-        var rand = new Random();
-        return rand.Next(1000, 4000);
     }
 }
