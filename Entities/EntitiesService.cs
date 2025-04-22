@@ -1,18 +1,18 @@
-﻿namespace Agar.io_Alpfa.Entities
+﻿using Agar.io_Alpfa.Constants;
+
+namespace Agar.io_Alpfa.Entities
 {
     public static class EntitiesService
     {
-        public static Constants.Constants constants = new();
-
         public static int GetRandCoord()
         {
             var rand = new Random();
-            return rand.Next(1000, 4000);
+            return rand.Next(10, 4980);
         }
         public static string GetRandColor()
         {
             var rand = new Random();
-            return constants.colors[rand.Next(0, constants.colors.Count)];
+            return Const.colors[rand.Next(0, Const.colors.Count)];
         }
         public static List<Food> GetRandFoods(int count)
         {

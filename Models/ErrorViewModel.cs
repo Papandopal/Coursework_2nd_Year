@@ -1,4 +1,4 @@
-namespace MvcMovie.Models;
+namespace Agar.io_Alpfa.Models;
 
 public class ErrorViewModel
 {

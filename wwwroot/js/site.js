@@ -4,15 +4,14 @@ scene.height = 5000
 const stx = scene.getContext("2d") 
 
 const canvas = document.createElement("canvas")
-canvas.width = window.outerWidth - 25
-canvas.height = window.outerHeight - 205
-//canvas.style.border = "1px solid black"
+canvas.width = window.innerWidth
+canvas.height = window.innerHeight
 
 const ctx = canvas.getContext("2d")
-
 var closeButton = document.getElementById("close");
 
 const gameState = {
+  /** @type{{ x: Number, y: Number, user_id: Number ,size: Number, speed: Number, type: string, mouse_x: Number, mouse_y: Number }[]} */
   points: []
 }
 const colors = ["#ff0000", "#0000ff", "#c0c0c0", "#800080", "#008000", "#000080"]
@@ -21,13 +20,17 @@ const colors = ["#ff0000", "#0000ff", "#c0c0c0", "#800080", "#008000", "#000080"
 let circles = [];
 
 const ws = new WebSocket("/ws")
+
 window.addEventListener('beforeunload', function () {
-    ws.send(JSON.stringify({ action: 'disconnect' }));
+    ws.send('disconnection');
     ws.close();
+    gameState.points.splice(gameState.points.indexOf(cur_player), 1)
 });
+
 let cur_player = {
-    x: 1, y: 1, size: 1, speed: 1, type: 'pos', mouse_x: 1, mouse_y:1
+    x: 1, y: 1, size: 1, user_id:0, speed: 1, type: 'pos', mouse_x: 1, mouse_y: 1
 }
+
 
 ws.addEventListener('message', (msg) => {
     str = String(msg.data)
@@ -66,14 +69,18 @@ ws.addEventListener('message', (msg) => {
 function draw() {
     
     ctx.clearRect(0, 0, canvas.width, canvas.height)  
+    ctx.font = "20px Arial"
+    ctx.fillStyle = "black"
+    ctx.fillText(`Radius: ${cur_player.size}`, 10, 30, 1000)
+    ctx.fillText(`X: ${cur_player.x}, Y: ${cur_player.y}`, 10, 60, 1000)
+    ctx.fillText(`Mouse_x: ${cur_player.mouse_x}, Mouse_y: ${cur_player.mouse_y}`, 10, 90, 1000)
+
 
     for (let circle of circles) {
         const screenX = circle.x - cur_player.x + canvas.width / 2;
         const screenY = circle.y - cur_player.y + canvas.height / 2;
 
         if (Math.pow(circle.x - cur_player.x, 2) + Math.pow(circle.y - cur_player.y, 2) <= cur_player.size * cur_player.size) {
-            //cur_player.size += 1
-            //gameState.points[cur_player.user_id].size = cur_player.size
             ws.send('new_size ' + cur_player.user_id.toString())
             ws.send('eat_food ' + circles.indexOf(circle).toString())
             continue
@@ -96,11 +103,11 @@ function draw() {
     {
         const screenX = point.x - cur_player.x + canvas.width / 2;
         const screenY = point.y - cur_player.y + canvas.height / 2;
-       /*
-        if (point != cur_player && point.size > cur_player.size && Math.sqrt(Math.pow(point.x - cur_player.x, 2) + Math.pow(point.y - cur_player.y, 2)) * 1.2 < point.size) {
+       
+        if (point != cur_player && point.size > cur_player.size && Math.sqrt(Math.pow(point.x - cur_player.x, 2) + Math.pow(point.y - cur_player.y, 2)) * 1.3 < point.size) {
             alert('Ты съеден')
         }
-        */
+        
         if (
             screenX + point.size > 0 &&
             screenY + point.size > 0 &&
@@ -113,7 +120,7 @@ function draw() {
             ctx.fill();
         }
     }
-
+    
   requestAnimationFrame(() => draw())
 }
 draw();
@@ -124,5 +131,5 @@ document.addEventListener('mousemove', e => {
     let data_x, data_y
     data_x = cur_player.x + e.clientX - canvas.width / 2;
     data_y = cur_player.y + e.clientY - canvas.height / 2;
-    ws.send(`move ` + 'X:' + data_x.toString() + ' ' + 'Y:' + data_y.toString())
+    ws.send([`move`, 'index:', cur_player.user_id.toString(), 'X:', data_x.toString(), 'Y:', data_y.toString()].join(" "))
 })

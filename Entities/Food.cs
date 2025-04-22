@@ -1,4 +1,6 @@
-﻿namespace Agar.io_Alpfa.Entities
+﻿using Agar.io_Alpfa.Constants; 
+
+namespace Agar.io_Alpfa.Entities
 {
     public record Food
     {
@@ -6,7 +8,7 @@
         {
             x = EntitiesService.GetRandCoord();
             y = EntitiesService.GetRandCoord();
-            size = EntitiesService.constants.FoodSize;
+            size = Const.FoodSize;
             color = EntitiesService.GetRandColor();
         }
         public double x { get; set; }

@@ -8,9 +8,9 @@ namespace Agar.io_Alpfa.Entities
         {
             x = EntitiesService.GetRandCoord();
             y = EntitiesService.GetRandCoord();
-            size = EntitiesService.constants.PlayerBasicSize;
+            size = Const.PlayerBasicSize;
             this.user_id = user_id;
-            speed = EntitiesService.constants.PlayerBasicSpeed;
+            speed = Const.PlayerBasicSpeed;
             mouse_x = 0;
             mouse_y = 0;
         }

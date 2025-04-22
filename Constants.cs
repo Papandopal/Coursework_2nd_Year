@@ -1,18 +1,21 @@
 ﻿namespace Agar.io_Alpfa.Constants
 {
-    public class Constants
+    public static class Const
     {
-        public int PlayerBasicSize = 20;
-        public int PlayerBasicSpeed = 3;
-        public int PlayerMinLenToMouseForMove = 20;
+        public static int PlayerBasicSize = 20;
+        public static int PlayerBasicSpeed = 3;
+        public static int PlayerMinLenToMouseForMove = 20;
+            
+        public static int CirclesCount = 300;
 
-        public int CirclesCount = 300;
+        public static int FoodSize = 10;
+        public static int FoodIncrease = 1;
 
-        public int FoodSize = 10;
-        public int FoodIncrease = 1;
+        public static int TimerPeriod = 20;
 
-        public int TimerPeriod = 20;
+        public static int MapHeight = 5000;
+        public static int MapWidth = 5000;
 
-        public List<string> colors = ["#ffff00", "#00ff00", "#00ffff"];
+        public static List<string> colors = ["#ffff00", "#00ff00", "#00ffff"];
     }
 }
