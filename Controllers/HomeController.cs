@@ -41,7 +41,6 @@ public class HomeController : Controller
         if (HttpContext.WebSockets.IsWebSocketRequest)
         {
             using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-            model.WebSockets.Add(webSocket);    
             await Echo(webSocket);
         }
         else
@@ -52,17 +51,16 @@ public class HomeController : Controller
 
     private async Task Echo(WebSocket webSocket)
     {
-        Player player = new Player(userGen++);
+        Player player = new Player(userGen++, webSocket);
         model.Players.Add(player);
 
+        await model.UpdateCurrentPlayer(player.user_id);
+        await model.LoadMap();
+        await model.UpdateAll();
+        //Task.WaitAll(task_1, task_2, task_3);
+
         var time_call_back = new TimerCallback(GoToMouseCoord);
-        var timer = new Timer(time_call_back, (player, webSocket), 0, Const.TimerPeriod);
-
-        var task_1 = model.LoadMap();
-        var task_2 = model.UpdateAll();
-        var task_3 = model.UpdateCurrentPlayer(player.user_id);
-
-        Task.WaitAll(task_1, task_2, task_3);
+        var timer = new Timer(time_call_back, player, 0, Const.TimerPeriod);
 
         try
         {
@@ -84,31 +82,18 @@ public class HomeController : Controller
 
                     var index = int.Parse(data_index);
                     double new_x, new_y;
-                    data_x = data_x.Replace('.', ',');
-                    data_y = data_y.Replace(".", ",");
 
-                    try
-                    { 
-                        new_x = double.Parse(data_x);
-                        new_y = double.Parse(data_y);
-                    }
-                    catch
-                    {
-                        data_x = data_x.Replace(',', '.');
-                        data_y = data_y.Replace(",", ".");
-
-                        new_x = double.Parse(data_x);
-                        new_y = double.Parse(data_y);
-                    }
+                    new_x = double.Parse(data_x);
+                    new_y = double.Parse(data_y);
 
                     model.Move(index, new_x, new_y);
 
                 }
                 else if (data.First() == "new_size")
                 {
-                    int index = int.Parse(data.ElementAt(1));
+                    int id = int.Parse(data.ElementAt(1));
 
-                    model.NewSize(index);
+                    model.NewSize(id);
 
                 }
                 else if (data.First() == "eat_food")
@@ -117,17 +102,11 @@ public class HomeController : Controller
 
                     model.EatFood(index);
                 }
-                else if(data.First() == "disconnection")
+                else if (data.First() == "disconnection")
                 {
                     timer.Dispose();
-                    model.WebSockets.Remove(webSocket);
                     //await webSocket.CloseAsync(receiveResult.CloseStatus.Value, receiveResult.CloseStatusDescription, CancellationToken.None);
                     model.Players.Remove(player);
-
-                    for(int i = player.user_id; i < model.Players.Count; i++)
-                    {
-                        --model.Players[i].user_id;
-                    }
 
                     return;
                 }
@@ -139,9 +118,9 @@ public class HomeController : Controller
 
             }
         }
-        catch(Exception e)
+        catch (Exception e)
         {
-            model.WebSockets.Remove(webSocket);
+            model.Players.Remove(player);
             Console.WriteLine(e);
             timer.Dispose();
             return;
@@ -150,19 +129,20 @@ public class HomeController : Controller
     }
     async void GoToMouseCoord(object obj)
     {
-        (Player, WebSocket) data = ((Player, WebSocket))obj;
-        var pos = data.Item1;
-        var ws = data.Item2;
+        Player data = (Player)obj;
+
+        var ws = data.connection;
 
         if (ws.State != WebSocketState.Open) return;
-
-        var pos_index = model.Players.IndexOf(pos);
-        var player = model.Players[pos_index];
+        
+        var player = model.Players.Where(item => item.user_id == data.user_id).First();
+        var pos_index = model.Players.IndexOf(player);
 
         var mouse_x = player.mouse_x;
         var mouse_y = player.mouse_y;
 
-        if (mouse_x!=player.x && mouse_y!=player.y)
+
+        if (mouse_x != player.x && mouse_y != player.y)
         {
             double len_vector = Math.Sqrt(Math.Pow(player.x - mouse_x, 2) + Math.Pow(player.y - mouse_y, 2));
             var x_norm = Math.Abs(player.x - mouse_x) / len_vector;
@@ -196,12 +176,11 @@ public class HomeController : Controller
             player.y = Math.Min(Math.Max(player.y, 0), Const.MapHeight);
             player.mouse_y = Math.Min(Math.Max(player.mouse_y, 0), Const.MapHeight);
 
+
             model.Players[pos_index] = player;
-            Console.WriteLine("move");
-            var task_1 = model.UpdateCurrentPlayer(pos_index);
-            var task_2 = model.UpdateAll();
-            Task.WaitAll(task_1, task_2);
-            Console.WriteLine("move-end");
+            await model.UpdateCurrentPlayer(player.user_id);
+            await model.UpdateAll();
+            //Task.WaitAll(task_1, task_2);
         }
     }
 }

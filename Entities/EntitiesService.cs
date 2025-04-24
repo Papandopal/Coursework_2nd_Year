@@ -1,4 +1,5 @@
-﻿using Agar.io_Alpfa.Constants;
+﻿using System.Collections.Concurrent;
+using Agar.io_Alpfa.Constants;
 
 namespace Agar.io_Alpfa.Entities
 {
@@ -14,9 +15,9 @@ namespace Agar.io_Alpfa.Entities
             var rand = new Random();
             return Const.colors[rand.Next(0, Const.colors.Count)];
         }
-        public static List<Food> GetRandFoods(int count)
+        public static ConcurrentList<Food> GetRandFoods(int count)
         {
-            var foods = new List<Food>();
+            var foods = new ConcurrentList<Food>();
             for (int i = 0; i < count; i++)
             {
                 Food c = new Food();

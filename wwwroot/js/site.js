@@ -11,7 +11,7 @@ const ctx = canvas.getContext("2d")
 var closeButton = document.getElementById("close");
 
 const gameState = {
-  /** @type{{ x: Number, y: Number, user_id: Number ,size: Number, speed: Number, type: string, mouse_x: Number, mouse_y: Number }[]} */
+  /** @type{{ x: Number, y: Number, user_id: Number ,size: Number, speed: Number }[]} */
   points: []
 }
 const colors = ["#ff0000", "#0000ff", "#c0c0c0", "#800080", "#008000", "#000080"]
@@ -28,7 +28,7 @@ window.addEventListener('beforeunload', function () {
 });
 
 let cur_player = {
-    x: 1, y: 1, size: 1, user_id:0, speed: 1, type: 'pos', mouse_x: 1, mouse_y: 1
+    x: 1, y: 1, user_id:0, size:1, speed: 1
 }
 
 
@@ -38,11 +38,22 @@ ws.addEventListener('message', (msg) => {
         
         str = str.replace("UpdateCurrentPlayer ", '')
         const data = JSON.parse(str)
-        cur_player = data
+        //cur_player = data
 
         cur_player.x = Math.max(Math.min(data.x, scene.width), 0)
         cur_player.y = Math.max(Math.min(data.y, scene.height), 0)
-        gameState.points[data.user_id] = cur_player
+        cur_player.user_id = data.user_id
+        cur_player.size = data.size;
+        cur_player.speed = data.speed
+        
+        
+        for (let player in gameState.points) {
+            if (player.user_id == cur_player.user_id) {
+                player = cur_player;
+                break;
+            }
+        }
+        //gameState.points[data.user_id] = cur_player
     }
     else if (str.includes("UpdateMap ")) {
         str = str.replace("UpdateMap ", '')
@@ -73,7 +84,7 @@ function draw() {
     ctx.fillStyle = "black"
     ctx.fillText(`Radius: ${cur_player.size}`, 10, 30, 1000)
     ctx.fillText(`X: ${cur_player.x}, Y: ${cur_player.y}`, 10, 60, 1000)
-    ctx.fillText(`Mouse_x: ${cur_player.mouse_x}, Mouse_y: ${cur_player.mouse_y}`, 10, 90, 1000)
+    //ctx.fillText(`Mouse_x: ${cur_player.mouse_x}, Mouse_y: ${cur_player.mouse_y}`, 10, 90, 1000)
 
 
     for (let circle of circles) {
