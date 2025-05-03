@@ -1,0 +1,96 @@
+﻿@{
+	ViewBag.Title = "Начало";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>@ViewBag.Title</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			max-width: 400px;
+			margin: 50px auto;
+			padding: 20px;
+			position: relative;
+		}
+
+		.form-group {
+			margin-bottom: 15px;
+		}
+
+			.form-group label {
+				display: block;
+				margin-bottom: 5px;
+			}
+
+			.form-group input {
+				width: 100%;
+				padding: 8px;
+				box-sizing: border-box;
+			}
+
+		.btn {
+			background-color: #4CAF50;
+			color: white;
+			padding: 10px 15px;
+			border: none;
+			cursor: pointer;
+			width: 100%;
+		}
+
+			.btn:hover {
+				background-color: #45a049;
+			}
+
+		.error {
+			color: red;
+			font-size: 0.8em;
+		}
+
+		.register-btn {
+			position: absolute;
+			top: 20px;
+			right: 20px;
+			background-color: #007BFF;
+			color: white;
+			padding: 8px 12px;
+			border: none;
+			cursor: pointer;
+			border-radius: 4px;
+		}
+
+			.register-btn:hover {
+				background-color: #0056b3;
+			}
+
+		.register-label {
+			position: absolute;
+			top: 50px;
+			right: 20px;
+			font-size: 0.9em;
+			color: #333;
+			text-align: center;
+		}
+	</style>
+</head>
+<body>
+	<a asp-action="Registration" asp-controller="Registration">
+		<button class="register-btn">→</button>
+		<div class="register-label">Регистрация</div>
+	</a>
+	<form asp-action="Begining" asp-controller="Begining" method="post">
+		<div class="form-group">
+			<label for="Name">Name</label>
+			<input id="Name" name="Name" class="form-control" />
+			<span class="error">@Html.ValidationMessage("Name")</span>
+		</div>
+		<button type="submit" class="btn">Играть</button>
+	</form>
+
+	<script src="~/lib/jquery/dist/jquery.min.js"></script>
+	<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+	<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+</body>
+</html>

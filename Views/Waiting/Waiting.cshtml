@@ -1,0 +1,10 @@
+﻿@{
+	string Title = "Ожидайте";
+	string Name = ViewBag.Name;
+}
+<h1>@Title</h1>
+<form name="hyeta" id="RedirectToGame" asp-action="Game" asp-controller="Game">
+	<input type="hidden" name="Name" value="@Name" />
+</form>
+
+<script src="~/js/Waiting.js" />

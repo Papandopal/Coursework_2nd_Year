@@ -5,104 +5,128 @@ namespace Agar.io_Alpfa
     public class ConcurrentList<T> : IEnumerable<T>
     {
         private readonly List<T> _list = new List<T>();
-        private readonly object _lock = new object();
+        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+
+        public void Add(T item)
+        {
+            _lock.EnterWriteLock();
+            try
+            {
+                _list.Add(item);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+
+        public bool Remove(T item)
+        {
+            _lock.EnterWriteLock();
+            try
+            {
+                return _list.Remove(item);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+
+        public void RemoveAt(int index)
+        {
+            _lock.EnterWriteLock();
+            try
+            {
+                _list.RemoveAt(index);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+
+        public int IndexOf(T item)
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                return _list.IndexOf(item);
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
 
         public T this[int index]
         {
             get
             {
-                lock (_lock) 
+                _lock.EnterReadLock();
+                try
                 {
-                    return _list.ElementAt(index);
+                    return _list[index];
                 }
-
+                finally
+                {
+                    _lock.ExitReadLock();
+                }
             }
             set
             {
-                lock (_lock)
+                _lock.EnterWriteLock();
+                try
                 {
                     _list[index] = value;
+                }
+                finally
+                {
+                    _lock.ExitWriteLock();
                 }
             }
         }
 
-        // Добавление элемента в список
-        public void Add(T item)
-        {
-            lock (_lock)
-            {
-                _list.Add(item);
-            }
-        }
-
-        // Удаление элемента из списка
-        public bool Remove(T item)
-        {
-            lock (_lock)
-            {
-                return _list.Remove(item);
-            }
-        }
-        public void RemoveAt(int index)
-        {
-            lock (_lock)
-            {
-                _list.RemoveAt(index);
-            }
-        }
-        public int IndexOf(T item)
-        {
-            lock (_lock)
-            {
-                return _list.IndexOf(item);
-            }
-        }
-        // Получение количества элементов
         public int Count
         {
             get
             {
-                lock (_lock)
+                _lock.EnterReadLock();
+                try
                 {
                     return _list.Count;
+                }
+                finally
+                {
+                    _lock.ExitReadLock();
                 }
             }
         }
 
-        // Очистка списка
         public void Clear()
         {
-            lock (_lock)
+            _lock.EnterWriteLock();
+            try
             {
                 _list.Clear();
             }
-        }
-
-        // Проверка, содержит ли список элемент
-        public bool Contains(T item)
-        {
-            lock (_lock)
+            finally
             {
-                return _list.Contains(item);
+                _lock.ExitWriteLock();
             }
         }
 
-        // Копирование элементов в массив
-        public T[] ToArray()
-        {
-            lock (_lock)
-            {
-                return _list.ToArray();
-            }
-        }
-
-        // Реализация IEnumerable<T> для перебора
         public IEnumerator<T> GetEnumerator()
         {
             List<T> snapshot;
-            lock (_lock)
+            _lock.EnterReadLock();
+            try
             {
-                snapshot = new List<T>(_list); // Создаем копию для безопасного перебора
+                snapshot = new List<T>(_list);
+            }
+            finally
+            {
+                _lock.ExitReadLock();
             }
             return snapshot.GetEnumerator();
         }

@@ -7,7 +7,7 @@ public class PlayerDTO
     public int user_id { get; set; }
     public double size { get; set; }
     public double speed { get; set; }
-
+    public string name { get; set; } = "name";
 }
 
 

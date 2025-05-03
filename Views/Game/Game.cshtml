@@ -1,0 +1,10 @@
+﻿@using Agar.io_Alpfa.RulesNameSpace;
+@{
+	string name = ViewBag.Name;
+}
+<script>
+	window.MAPWIDTH = @Rules.MapWidth
+	window.MAPHEIGHT = @Rules.MapWidth
+	window.NAME = '@name'
+</script>
+<script src="~/js/Game.js"></script>

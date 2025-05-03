@@ -1,5 +1,6 @@
 ﻿using System.Net.WebSockets;
-using Agar.io_Alpfa.Constants;
+using Agar.io_Alpfa.RulesNameSpace;
+using Agar.io_Alpfa.Services;
 
 namespace Agar.io_Alpfa.Entities
 {
@@ -10,9 +11,9 @@ namespace Agar.io_Alpfa.Entities
         {
             x = EntitiesService.GetRandCoord();
             y = EntitiesService.GetRandCoord();
-            size = Const.PlayerBasicSize;
+            size = Rules.PlayerBasicSize;
             this.user_id = user_id;
-            speed = Const.PlayerBasicSpeed;
+            speed = Rules.PlayerBasicSpeed;
             mouse_x = 0;
             mouse_y = 0;
             this.connection = connection;
@@ -22,6 +23,7 @@ namespace Agar.io_Alpfa.Entities
         public int user_id { get; set; }
         public double size { get; set; }
         public double speed { get; set; }
+        public string name { get; set; } = "name";
         public string type { get; set; } = "pos";
         public double mouse_x { get; set; }
         public double mouse_y { get; set; }
@@ -34,6 +36,7 @@ namespace Agar.io_Alpfa.Entities
             _dto.size = size;
             _dto.speed = speed;
             _dto.user_id = user_id;
+            _dto.name = name;
             return _dto;
         }
 
