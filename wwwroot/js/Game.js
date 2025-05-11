@@ -31,6 +31,7 @@ let cur_player = {
 	x: 1, y: 1, user_id: -1, size: 1, speed: 1, name: NAME
 }
 let visibility = 1.0
+let IDied = false
 
 ws.addEventListener('message', (msg) => {
 	str = String(msg.data)
@@ -70,9 +71,9 @@ ws.addEventListener('message', (msg) => {
 		index = JSON.parse(str)
 		circles.splice(index, 1)
 	}
-	else if (str.includes("Reset")) {
-
-		window.location.pathname = ""
+	else if (str.includes("Reset ")) {
+		str = str.replace("Reset ", '')
+		window.location.pathname = str
 
 	}
 	else {
@@ -97,21 +98,18 @@ ws.addEventListener('message', (msg) => {
 })
 
 function draw() {
-	//ctx.resetTransform()
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
-	//ctx.translate(cur_player.x, cur_player.y)
 	ctx.font = "20px Arial"
 	ctx.fillStyle = "black"
 	ctx.fillText(`Radius: ${cur_player.size}`, 10, 30, 1000)
 	ctx.fillText(`X: ${cur_player.x}, Y: ${cur_player.y}`, 10, 60, 1000)
-	//ctx.fillText(`Mouse_x: ${cur_player.mouse_x}, Mouse_y: ${cur_player.mouse_y}`, 10, 90, 1000)
 
 
 	for (let circle of circles) {
 		const screenX = (circle.x - cur_player.x) * visibility + canvas.width / 2;
 		const screenY = (circle.y - cur_player.y) * visibility + canvas.height / 2;
 
-		if (!circle.is_eated && Math.pow(circle.x - cur_player.x, 2) + Math.pow(circle.y - cur_player.y, 2) <= cur_player.size * visibility * cur_player.size * visibility) {
+		if (!circle.is_eated && Math.pow(circle.x - cur_player.x, 2) + Math.pow(circle.y - cur_player.y, 2) <= cur_player.size * cur_player.size) {
 			ws.send(['new_size', cur_player.user_id.toString()].join(' '))
 			ws.send(['eat_food', 'index_of_circle', circles.indexOf(circle).toString()].join(' '))
 			circle.is_eated = true
@@ -135,8 +133,9 @@ function draw() {
 		const screenX = (point.x - cur_player.x) * visibility + canvas.width / 2;
 		const screenY = (point.y - cur_player.y) * visibility + canvas.height / 2;
 
-		if (point != cur_player && point.size * visibility > cur_player.size * visibility && Math.sqrt(Math.pow(point.x - cur_player.x, 2) + Math.pow(point.y - cur_player.y, 2)) * 1.3 < point.size * visibility) {
+		if (point != cur_player && IDied==false && point.size * visibility > cur_player.size * visibility && Math.sqrt(Math.pow(point.x - cur_player.x, 2) + Math.pow(point.y - cur_player.y, 2)) * 1.3 < point.size * visibility) {
 			ws.send(['kill', 'user_id:', cur_player.user_id.toString(), 'killer_id:', point.user_id.toString()].join(' '))
+			IDied = true
 		}
 
 		if (
@@ -151,9 +150,9 @@ function draw() {
 			ctx.fill();
 		}
 	}
-	if (cur_player.size > 200) visibility = 0.25
-	else if (cur_player.size > 100) visibility = 0.5
-	else if (cur_player.size > 50) visibility = 0.75
+	if (cur_player.size > 200 && visibility>0.25) visibility-=0.01
+	else if (cur_player.size > 100 && visibility>0.5) visibility-=0.01
+	else if (cur_player.size > 50 && visibility>0.75) visibility-=0.01
 	requestAnimationFrame(() => draw())
 }
 draw();
@@ -163,5 +162,5 @@ document.addEventListener('mousemove', e => {
 	let data_x, data_y
 	data_x = cur_player.x + e.clientX - canvas.width / 2;
 	data_y = cur_player.y + e.clientY - canvas.height / 2;
-	ws.send([`move`, 'index:', cur_player.user_id.toString(), 'X:', data_x.toString(), 'Y:', data_y.toString()].join(" "))
+	ws.send([`mousemove`, 'index:', cur_player.user_id.toString(), 'X:', data_x.toString(), 'Y:', data_y.toString()].join(" "))
 })

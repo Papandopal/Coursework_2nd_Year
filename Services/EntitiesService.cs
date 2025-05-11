@@ -9,7 +9,7 @@ namespace Agar.io_Alpfa.Services
         public static int GetRandCoord()
         {
             var rand = new Random();
-            return rand.Next(10, Rules.MapWidth-10);
+            return rand.Next(10, Rules.MapSize-10);
         }
         public static string GetRandColor()
         {

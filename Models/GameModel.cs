@@ -2,18 +2,16 @@
 using Agar.io_Alpfa.RulesNameSpace;
 using System.Net.WebSockets;
 using System.Text;
-using Agar.io_Alpfa.Controllers;
-using Microsoft.AspNetCore.Mvc;
 using Agar.io_Alpfa.Services;
 
 namespace Agar.io_Alpfa.Models
 {
     public class GameModel
     {
-        public ConcurrentList<Player> Players = new ConcurrentList<Player>();
-        public ConcurrentList<Food> Foods = EntitiesService.GetRandFoods(Rules.CirclesCount);
+        public ConcurrentList<Player> Players = new();
+        public ConcurrentList<Food> Foods = new();
 
-        public async Task UpdateAll()
+        public async Task UpdateAllPlayers()
         {
             if (Players.Count == 0) return;
 
@@ -35,7 +33,7 @@ namespace Agar.io_Alpfa.Models
         {
             if (Players.Count == 0) return;
 
-            Player player = Players.Where((item) => item.user_id == id).FirstOrDefault();
+            Player? player = Players.Where((item) => item.user_id == id).FirstOrDefault();
 
             if (player == null) return;
 
@@ -92,7 +90,7 @@ namespace Agar.io_Alpfa.Models
                     CancellationToken.None);
             }
         }
-        public async void EatFood(int index)
+        public void EatFood(int index)
         {
             Foods.RemoveAt(index);
             var task_1 = DeleteFood(index);
@@ -103,9 +101,8 @@ namespace Agar.io_Alpfa.Models
             var task_2 = UpdateMap(new_food);
 
             Task.WaitAll(task_1, task_2);
-            //await task_1;
         }
-        public async void Move(int index, double new_x, double new_y)
+        public void MouseMove(int index, double new_x, double new_y)
         {
             if (Players.Count == 0) return;
 
@@ -120,7 +117,7 @@ namespace Agar.io_Alpfa.Models
             }
 
         }
-        public async void NewSize(int id)
+        public void NewSize(int id)
         {
             if (Players.Count == 0) return;
 
@@ -136,7 +133,7 @@ namespace Agar.io_Alpfa.Models
             Task.WaitAll(task_1);
 
         }
-        public async Task NewSize(int victim_id, int killer_id)
+        public void NewSize(int victim_id, int killer_id)
         {
             if (Players.Count == 0) return;
 
@@ -157,22 +154,38 @@ namespace Agar.io_Alpfa.Models
         }
         public async void ResetPlayer(int id)
         {
-            var player = Players.Where(item=>item.user_id == id).FirstOrDefault();
-            
-            if(player == null)
+            var player = Players.Where(item => item.user_id == id).FirstOrDefault();
+
+            if (player == null)
             {
                 throw new Exception("ResetPlayer не нашел человека");
             }
 
-            Players.Remove(player);
+
             
-            string s = "Reset";
+
+            Players.Remove(player);
+
+            string s = "Reset " + "/Game/EndGame";
 
             await player.connection.SendAsync(
                 Encoding.ASCII.GetBytes(s).ToArray(),
                 WebSocketMessageType.Text,
                 true,
                 CancellationToken.None);
+
+        }
+        public async Task<string> GetName(WebSocket webSocket)
+        {
+            var buffer = new byte[1024 * 4];
+            var receiveResult = await webSocket.ReceiveAsync(
+                new ArraySegment<byte>(buffer), CancellationToken.None);
+            string[] data = Encoding.ASCII.GetString(buffer, 0, receiveResult.Count).Split();
+            if (data.Contains("MyNameIs:"))
+            {
+                return data.ElementAt(1);
+            }
+            throw new Exception($"Пришло не имя а{data}");
         }
     }
 }

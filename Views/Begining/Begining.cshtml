@@ -1,5 +1,6 @@
 ﻿@{
 	ViewBag.Title = "Начало";
+	string Url = Environment.GetEnvironmentVariable("TUNNEL_URL") ?? "Not find tunnel";
 }
 
 <!DOCTYPE html>
@@ -51,7 +52,7 @@
 
 		.register-btn {
 			position: absolute;
-			top: 20px;
+			top: 40px;
 			right: 20px;
 			background-color: #007BFF;
 			color: white;
@@ -67,7 +68,7 @@
 
 		.register-label {
 			position: absolute;
-			top: 50px;
+			top: 70px;
 			right: 20px;
 			font-size: 0.9em;
 			color: #333;
@@ -88,6 +89,34 @@
 		</div>
 		<button type="submit" class="btn">Играть</button>
 	</form>
+	<div style="display: flex; align-items: center;">
+		<label>Позвать друзей: </label>
+		<label id="url" style="margin-right: 10px;" value="@Url"></label>
+		<button onclick="copyToClipboard()">Копировать</button>
+	</div>
+	<script>
+			function copyToClipboard() {
+			const text = document.getElementById("url").value;
+			if (navigator.clipboard) {
+				navigator.clipboard.writeText(text).then(() => {
+					alert("Текст скопирован!");
+				}).catch(() => {
+					alert("Копирование не удалось");
+				});
+			} else {
+				// fallback для старых браузеров
+				const textInput = document.getElementById("url");
+				textInput.select();
+				textInput.setSelectionRange(0, 99999);
+				try {
+					document.execCommand("copy");
+					alert("Текст скопирован!");
+				} catch (err) {
+					alert("Копирование не удалось");
+				}
+			}
+		}
+	</script>
 
 	<script src="~/lib/jquery/dist/jquery.min.js"></script>
 	<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>

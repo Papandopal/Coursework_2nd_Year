@@ -1,4 +1,5 @@
 using System.Globalization;
+using Agar.io_Alpfa;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,5 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Begining}/{action=Begining}/{id?}")
     .WithStaticAssets();
-
 
 app.Run();

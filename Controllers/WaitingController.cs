@@ -51,9 +51,7 @@ namespace Agar.io_Alpfa.Controllers
         {
             foreach (var connection in connections)
             {
-                string s = "StartGame";
-                Console.WriteLine("dkjcnwiibiuwcvuwivciuwbvcuivwuc");
-                //if (connection.State.Equals(WebSocketState.Closed)) continue;   
+                string s = "StartGame"; 
                 connection.SendAsync(
                     Encoding.ASCII.GetBytes(s).ToArray(),
                     WebSocketMessageType.Text,

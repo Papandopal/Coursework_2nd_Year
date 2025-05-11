@@ -1,8 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Mvc;
 using Agar.io_Alpfa.Entities.ModelsForControllers;
-using System.Security.Cryptography;
-using System.Reflection;
+using Agar.io_Alpfa.RulesNameSpace;
 
 namespace Agar.io_Alpfa.Controllers
 {
@@ -21,29 +20,51 @@ namespace Agar.io_Alpfa.Controllers
         [HttpPost]
         public void Voting([FromBody] VoteModel model)
         {
+
+            SaveAnthver(MapVotes, model.SelectedMapSize, Rules.MapSizes, ref Rules.MapSize);
+
+            SaveAnthver(SpeedVotes, model.SelectedSpeed, Rules.PlayerSpeeds, ref Rules.PlayerBasicSpeed);
+
+        }
+
+        void SaveAnthver(IDictionary<string, int> DictWithVotes, string SelectedItem, IDictionary<string, int> DictFromRules, ref int SelectedItemFromRules)
+        {
             int checkKeyValue;
-            if (ModelState.IsValid)
+            if (DictWithVotes.TryGetValue(SelectedItem, out checkKeyValue))
             {
-                if (MapVotes.TryGetValue(model.SelectedMapSize, out checkKeyValue))
+                DictWithVotes[SelectedItem] += 1;
+            }
+            else
+            {
+                DictWithVotes.TryAdd(SelectedItem, 1);
+            }
+
+            string MaxVotesSpeed = string.Empty;
+
+            try
+            {
+                MaxVotesSpeed = DictWithVotes.Max().Key;
+            }
+            catch (ArgumentException ex)
+            {
+                var max_votes = DictWithVotes.Values.Max();
+                ConcurrentList<string> max_votes_speeds = new ConcurrentList<string>();
+
+                foreach (var item in SpeedVotes)
                 {
-                    MapVotes[model.SelectedMapSize] += 1;
-                }
-                else
-                {
-                    MapVotes.TryAdd(model.SelectedMapSize, 1);
+                    if (item.Value == max_votes) max_votes_speeds.Add(item.Key);
                 }
 
-                if (SpeedVotes.TryGetValue(model.SelectedSpeed, out checkKeyValue))
-                {
-                    SpeedVotes[model.SelectedSpeed] += 1;
-                }
-                else
-                {
-                    SpeedVotes.TryAdd(model.SelectedSpeed, 1);
-                }
+                var rand = new Random();
+                MaxVotesSpeed = max_votes_speeds[rand.Next(0, max_votes_speeds.Count)];
+
             }
-            
+            finally
+            {
+                SelectedItemFromRules = DictFromRules[MaxVotesSpeed];
+            }
         }
+
         [HttpPost]
         public IActionResult RedirectToWaiting(string Name)
         {
