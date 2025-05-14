@@ -1,10 +1,16 @@
 using System.Globalization;
-using Agar.io_Alpfa;
+using Agar.io_Alpfa.Models;
+using Agar.io_Alpfa.Interfaces;
+using Agar.io_Alpfa.Entities;
+using Agar.io_Alpfa.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+//builder.Services.AddSingleton<GameController>();
+//builder.Services.AddSingleton<IModel, GameModel>();
 
 var app = builder.Build();
 

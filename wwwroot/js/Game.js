@@ -162,5 +162,5 @@ document.addEventListener('mousemove', e => {
 	let data_x, data_y
 	data_x = cur_player.x + e.clientX - canvas.width / 2;
 	data_y = cur_player.y + e.clientY - canvas.height / 2;
-	ws.send([`mousemove`, 'index:', cur_player.user_id.toString(), 'X:', data_x.toString(), 'Y:', data_y.toString()].join(" "))
+	ws.send([`move`, 'index:', cur_player.user_id.toString(), 'X:', data_x.toString(), 'Y:', data_y.toString()].join(" "))
 })

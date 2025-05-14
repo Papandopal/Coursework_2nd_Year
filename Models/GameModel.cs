@@ -1,15 +1,16 @@
 ﻿using Agar.io_Alpfa.Entities;
-using Agar.io_Alpfa.RulesNameSpace;
+using Agar.io_Alpfa.Models;
+using Agar.io_Alpfa.Interfaces;
 using System.Net.WebSockets;
 using System.Text;
-using Agar.io_Alpfa.Services;
 
 namespace Agar.io_Alpfa.Models
 {
-    public class GameModel
+    public class GameModel : IModel
     {
-        public ConcurrentList<Player> Players = new();
-        public ConcurrentList<Food> Foods = new();
+        
+        public ConcurrentList<Player> Players { get; set; } = new ();
+        public ConcurrentList<Food> Foods { get; set; } = new();
 
         public async Task UpdateAllPlayers()
         {
@@ -102,7 +103,7 @@ namespace Agar.io_Alpfa.Models
 
             Task.WaitAll(task_1, task_2);
         }
-        public void MouseMove(int index, double new_x, double new_y)
+        public void Move(int index, double new_x, double new_y)
         {
             if (Players.Count == 0) return;
 
@@ -110,8 +111,7 @@ namespace Agar.io_Alpfa.Models
             {
                 if (player.user_id == index)
                 {
-                    player.mouse_x = new_x;
-                    player.mouse_y = new_y;
+                    player.Move(new_x, new_y);
                     break;
                 }
             }
@@ -161,9 +161,6 @@ namespace Agar.io_Alpfa.Models
                 throw new Exception("ResetPlayer не нашел человека");
             }
 
-
-            
-
             Players.Remove(player);
 
             string s = "Reset " + "/Game/EndGame";
@@ -174,18 +171,6 @@ namespace Agar.io_Alpfa.Models
                 true,
                 CancellationToken.None);
 
-        }
-        public async Task<string> GetName(WebSocket webSocket)
-        {
-            var buffer = new byte[1024 * 4];
-            var receiveResult = await webSocket.ReceiveAsync(
-                new ArraySegment<byte>(buffer), CancellationToken.None);
-            string[] data = Encoding.ASCII.GetString(buffer, 0, receiveResult.Count).Split();
-            if (data.Contains("MyNameIs:"))
-            {
-                return data.ElementAt(1);
-            }
-            throw new Exception($"Пришло не имя а{data}");
         }
     }
 }

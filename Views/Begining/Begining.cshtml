@@ -1,6 +1,5 @@
 ﻿@{
 	ViewBag.Title = "Начало";
-	string Url = Environment.GetEnvironmentVariable("TUNNEL_URL") ?? "Not find tunnel";
 }
 
 <!DOCTYPE html>
@@ -91,15 +90,15 @@
 	</form>
 	<div style="display: flex; align-items: center;">
 		<label>Позвать друзей: </label>
-		<label id="url" style="margin-right: 10px;" value="@Url"></label>
+		<label id="url" style="margin-right: 10px;"></label>
 		<button onclick="copyToClipboard()">Копировать</button>
 	</div>
 	<script>
 			function copyToClipboard() {
-			const text = document.getElementById("url").value;
+			document.getElementById("url").value = window.location.origin;
 			if (navigator.clipboard) {
-				navigator.clipboard.writeText(text).then(() => {
-					alert("Текст скопирован!");
+				navigator.clipboard.writeText(window.location.origin).then(() => {
+					//alert("Текст скопирован!");
 				}).catch(() => {
 					alert("Копирование не удалось");
 				});
@@ -110,7 +109,7 @@
 				textInput.setSelectionRange(0, 99999);
 				try {
 					document.execCommand("copy");
-					alert("Текст скопирован!");
+					//alert("Текст скопирован!");
 				} catch (err) {
 					alert("Копирование не удалось");
 				}

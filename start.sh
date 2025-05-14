@@ -12,8 +12,8 @@ if [ -z "$TUNNEL_URL" ]; then
   exit 1
 fi
 
+echo " "
 echo "Ваша игра доступна по адресу: $TUNNEL_URL"
-
-export TUNNEL_URL="$TUNNEL_URL"
+echo " "
 
 dotnet Agar.io_Alpfa.dll

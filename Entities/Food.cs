@@ -1,4 +1,4 @@
-﻿using Agar.io_Alpfa.RulesNameSpace;
+﻿using Agar.io_Alpfa.Models;
 using Agar.io_Alpfa.Services;
 
 namespace Agar.io_Alpfa.Entities

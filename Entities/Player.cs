@@ -1,5 +1,6 @@
 ﻿using System.Net.WebSockets;
-using Agar.io_Alpfa.RulesNameSpace;
+using Agar.io_Alpfa.Interfaces;
+using Agar.io_Alpfa.Models;
 using Agar.io_Alpfa.Services;
 
 namespace Agar.io_Alpfa.Entities
@@ -7,7 +8,8 @@ namespace Agar.io_Alpfa.Entities
     public record Player
     {
         private PlayerDTO _dto = new PlayerDTO();
-        public Player(int user_id, WebSocket connection)
+        private IMoveble moveble;
+        public Player(int user_id, WebSocket connection, IMoveble moveble)
         {
             x = EntitiesService.GetRandCoord();
             y = EntitiesService.GetRandCoord();
@@ -17,6 +19,9 @@ namespace Agar.io_Alpfa.Entities
             mouse_x = 0;
             mouse_y = 0;
             this.connection = connection;
+            this.moveble = moveble;
+            moveble.player = this;
+            
         }
         public double x { get; set; }
         public double y { get; set; }
@@ -40,6 +45,15 @@ namespace Agar.io_Alpfa.Entities
             return _dto;
         }
 
+        public void SetMovable(IMoveble moveble)
+        {
+            this.moveble = moveble;
+        }
+
+        public void Move(double new_x, double new_y)
+        {
+            moveble.Move(new_x, new_y);
+        }
     };
 
 }

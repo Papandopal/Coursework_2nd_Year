@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Mvc;
 using Agar.io_Alpfa.Entities.ModelsForControllers;
-using Agar.io_Alpfa.RulesNameSpace;
+using Agar.io_Alpfa.Models;
 
 namespace Agar.io_Alpfa.Controllers
 {

@@ -1,4 +1,4 @@
-﻿using Agar.io_Alpfa.RulesNameSpace;
+﻿using Agar.io_Alpfa.Models;
 using Agar.io_Alpfa.Entities.ModelsForControllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http.Extensions;
@@ -10,7 +10,6 @@ namespace Agar.io_Alpfa.Controllers
         [HttpGet]
         public IActionResult Begining()
         {
-            if(UrlHolder.Url == "None")UrlHolder.Url = Environment.GetEnvironmentVariable("TUNNEL_URL") ?? "Not find tunnel";
             return View();
         }
 

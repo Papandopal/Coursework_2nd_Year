@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using Agar.io_Alpfa.Entities;
-using Agar.io_Alpfa.RulesNameSpace;
+using Agar.io_Alpfa.Models;
 
 namespace Agar.io_Alpfa.Services
 {
@@ -8,6 +8,9 @@ namespace Agar.io_Alpfa.Services
     {
         public static int GetRandCoord()
         {
+
+            while(Rules.MapSize==0) { continue; }
+
             var rand = new Random();
             return rand.Next(10, Rules.MapSize-10);
         }
