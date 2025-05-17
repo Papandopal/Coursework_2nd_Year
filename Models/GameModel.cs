@@ -166,7 +166,7 @@ namespace Agar.io_Alpfa.Models
                 throw new Exception("ResetPlayer не нашел человека");
             }
 
-            leaderBoard.TrySavePlayerAsync(player.name, player.size);
+            var task = Task.Run(()=>leaderBoard.TrySavePlayerAsync(player.name, player.size));
 
             Players.Remove(player);
 
@@ -178,6 +178,7 @@ namespace Agar.io_Alpfa.Models
                 WebSocketMessageType.Text,
                 true,
                 CancellationToken.None);
+            Task.WaitAll(task);
 
         }
     }
