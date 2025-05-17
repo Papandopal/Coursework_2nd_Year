@@ -29,6 +29,7 @@ namespace Agar.io_Alpfa.Controllers
         [HttpPost]
         public IActionResult Waiting([FromBody] WaitingModel model)
         {
+            if(!ModelState.IsValid) return View(model);
             return RedirectToAction("Game", "Game", new { name = model.Name });
         }
 
@@ -39,7 +40,7 @@ namespace Agar.io_Alpfa.Controllers
             {
                 var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
                 connections.Add(webSocket);
-                await Task.Delay(30000);
+                await Task.Delay(300000);
             }
             else
             {

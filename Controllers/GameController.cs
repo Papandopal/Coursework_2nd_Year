@@ -6,24 +6,31 @@ using Agar.io_Alpfa.Models;
 using Agar.io_Alpfa.Entities;
 using Agar.io_Alpfa.Services;
 using Agar.io_Alpfa.Interfaces;
+using Agar.io_Alpfa.DataBases;
 
 namespace Agar.io_Alpfa.Controllers;
 public class GameController : Controller
 {
     static IModel game_model = new GameModel();
+    static IDeserializator Deserializator = new MyDeserializator();
+    
+
     static int userGen = 0;
-    static TimerCallback time_call_back;
-    static Timer timer;
+
+    static TimerCallback? time_call_back;
+    static Timer? timer;
+
     private readonly ILogger<GameController> _logger;
 
     public GameController(ILogger<GameController> logger)
     {
         _logger = logger;
-        //game_model = model;
         game_model.Foods = EntitiesService.GetRandFoods(Rules.CirclesCount);
 
+        Deserializator.model = game_model;
+
         time_call_back = new TimerCallback(StartUpdateAllEveryTime);
-        timer = new Timer(time_call_back, null, 0, Rules.TimerPeriod);
+        timer = new Timer(time_call_back, null, 0, Rules.TimerPeriod-5);
     }
 
     public IActionResult Game(string Name)
@@ -72,7 +79,7 @@ public class GameController : Controller
 
     private async Task DialogWith(WebSocket webSocket)
     {
-        Player player = new Player(userGen++, webSocket, new MouseMoveble());
+        Player player = new Player(userGen++, webSocket);
 
         player.name = await GetName(webSocket);
         game_model.Players.Add(player);
@@ -92,49 +99,11 @@ public class GameController : Controller
             {
                 String ss = Encoding.ASCII.GetString(buffer, 0, receiveResult.Count);
 
-                var data = ss.Split();
+                var status = Deserializator.Deserialize(ss);
 
-                if (data.First() == "move")
+                if (status == Status.Disconnect)
                 {
-                    string data_index = data.ElementAt(2);
-                    string data_x = data.ElementAt(4);
-                    string data_y = data.ElementAt(6);
-
-                    var index = int.Parse(data_index);
-                    double new_x, new_y;
-
-                    new_x = double.Parse(data_x);
-                    new_y = double.Parse(data_y);
-
-                    game_model.Move(index, new_x, new_y);
-
-                }
-                else if (data.First() == "new_size")
-                {
-                    int id = int.Parse(data.ElementAt(1));
-
-                    game_model.NewSize(id);
-
-                }
-                else if (data.First() == "eat_food")
-                {
-                    int index = int.Parse(data.ElementAt(2));
-
-                    game_model.EatFood(index);
-                }
-                else if (data.First() == "disconnect")
-                {
-                    game_model.Players.Remove(player);
-                    await game_model.UpdateAllPlayers();
                     return;
-                }
-                else if (data.First() == "kill")
-                {
-
-                    int victim_id = int.Parse(data.ElementAt(2));
-                    int killer_id = int.Parse(data.ElementAt(4));
-                    game_model.NewSize(victim_id, killer_id);
-                    game_model.ResetPlayer(victim_id);
                 }
 
                 receiveResult = await webSocket.ReceiveAsync(
@@ -151,7 +120,7 @@ public class GameController : Controller
 
     }
 
-    async void StartUpdateAllEveryTime(object obj)
+    async void StartUpdateAllEveryTime(object? obj)
     {   
         await game_model.UpdateAllPlayers();
     }

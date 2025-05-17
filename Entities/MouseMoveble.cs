@@ -6,8 +6,8 @@ namespace Agar.io_Alpfa.Entities
     public class MouseMoveble : IMoveble
     {
         public Player player { get; set; }
-        static TimerCallback time_call_back;
-        static Timer timer;
+        TimerCallback time_call_back;
+        Timer timer;
 
         public MouseMoveble()
         {

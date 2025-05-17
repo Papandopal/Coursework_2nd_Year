@@ -9,7 +9,7 @@ namespace Agar.io_Alpfa.Entities
     {
         private PlayerDTO _dto = new PlayerDTO();
         private IMoveble moveble;
-        public Player(int user_id, WebSocket connection, IMoveble moveble)
+        public Player(int user_id, WebSocket connection)
         {
             x = EntitiesService.GetRandCoord();
             y = EntitiesService.GetRandCoord();
@@ -19,7 +19,7 @@ namespace Agar.io_Alpfa.Entities
             mouse_x = 0;
             mouse_y = 0;
             this.connection = connection;
-            this.moveble = moveble;
+            moveble = new MouseMoveble();
             moveble.player = this;
             
         }

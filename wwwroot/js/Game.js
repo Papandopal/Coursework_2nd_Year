@@ -19,10 +19,12 @@ const colors = ["#ff0000", "#0000ff", "#c0c0c0", "#800080", "#008000", "#000080"
 let circles = [];
 
 const ws = new WebSocket("/ws")
-ws.addEventListener("open", e => { ws.send(['MyNameIs:', NAME].join(' ')) })
+ws.addEventListener("open", e => {
+	ws.send(['MyNameIs:', NAME].join(' '))
+})
 
 window.addEventListener('beforeunload', function () {
-	ws.send('disconnect');
+	ws.send(['disconnect', 'id:', cur_player.user_id.toString()].join(' '));
 	ws.close();
 	gameState.points.splice(gameState.points.indexOf(cur_player), 1)
 });
@@ -130,6 +132,9 @@ function draw() {
 	}
 
 	for (let point of gameState.points) {
+
+		if (IDied) continue
+
 		const screenX = (point.x - cur_player.x) * visibility + canvas.width / 2;
 		const screenY = (point.y - cur_player.y) * visibility + canvas.height / 2;
 

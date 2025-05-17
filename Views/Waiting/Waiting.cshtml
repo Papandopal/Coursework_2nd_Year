@@ -4,7 +4,8 @@
 }
 <h1>@Title</h1>
 <form name="hyeta" id="RedirectToGame" asp-action="Game" asp-controller="Game">
-	<input type="hidden" name="Name" value="@Name" />
+	<input type="hidden" name="Name" value="@Name"/>
 </form>
 
+<script> window.NAME = "@Name" </script>
 <script src="~/js/Waiting.js"></script>

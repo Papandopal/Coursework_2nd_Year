@@ -3,26 +3,28 @@ using Agar.io_Alpfa.Models;
 using Agar.io_Alpfa.Interfaces;
 using System.Net.WebSockets;
 using System.Text;
+using Agar.io_Alpfa.DataBases;
 
 namespace Agar.io_Alpfa.Models
 {
     public class GameModel : IModel
     {
-        
         public ConcurrentList<Player> Players { get; set; } = new ();
         public ConcurrentList<Food> Foods { get; set; } = new();
+
+        static LeaderBoard leaderBoard = new();
 
         public async Task UpdateAllPlayers()
         {
             if (Players.Count == 0) return;
 
             IEnumerable<PlayerDTO> players_dto = Players.Select(x => x.GetDTO());
+            string s = System.Text.Json.JsonSerializer.Serialize(players_dto);
 
             foreach (var player in Players)
             {
-                string s = System.Text.Json.JsonSerializer.Serialize(players_dto);
-
-                await player.connection.SendAsync(
+                if(player.connection.State==WebSocketState.Open) 
+                    await player.connection.SendAsync(
                     Encoding.ASCII.GetBytes(s).ToArray(),
                     WebSocketMessageType.Text,
                     true,
@@ -40,7 +42,8 @@ namespace Agar.io_Alpfa.Models
 
             string s = "UpdateCurrentPlayer " + System.Text.Json.JsonSerializer.Serialize(player.GetDTO());
 
-            await player.connection.SendAsync(
+            if (player.connection.State == WebSocketState.Open) 
+                await player.connection.SendAsync(
                 Encoding.ASCII.GetBytes(s).ToArray(),
                 WebSocketMessageType.Text,
                 true,
@@ -51,11 +54,12 @@ namespace Agar.io_Alpfa.Models
         public async Task UpdateMap(Food c)
         {
             if (Players.Count == 0) return;
+            string s = "UpdateMap " + System.Text.Json.JsonSerializer.Serialize(c);
 
             foreach (var player in Players)
             {
-                string s = "UpdateMap " + System.Text.Json.JsonSerializer.Serialize(c);
-                await player.connection.SendAsync(
+                if (player.connection.State == WebSocketState.Open) 
+                    await player.connection.SendAsync(
                     Encoding.ASCII.GetBytes(s).ToArray(),
                     WebSocketMessageType.Text,
                     true,
@@ -65,12 +69,12 @@ namespace Agar.io_Alpfa.Models
         public async Task DeleteFood(int index)
         {
             if (Players.Count == 0) return;
+            string s = "DeleteFood " + System.Text.Json.JsonSerializer.Serialize(index);
 
             foreach (var player in Players)
             {
-
-                string s = "DeleteFood " + System.Text.Json.JsonSerializer.Serialize(index);
-                await player.connection.SendAsync(
+                if (player.connection.State == WebSocketState.Open) 
+                    await player.connection.SendAsync(
                     Encoding.ASCII.GetBytes(s).ToArray(),
                     WebSocketMessageType.Text,
                     true,
@@ -80,11 +84,12 @@ namespace Agar.io_Alpfa.Models
         public async Task LoadMap()
         {
             if (Players.Count == 0) return;
+            string s = "LoadMap " + System.Text.Json.JsonSerializer.Serialize(Foods);
 
             foreach (var player in Players)
             {
-                string s = "LoadMap " + System.Text.Json.JsonSerializer.Serialize(Foods);
-                await player.connection.SendAsync(
+                if (player.connection.State == WebSocketState.Open) 
+                    await player.connection.SendAsync(
                     Encoding.ASCII.GetBytes(s).ToArray(),
                     WebSocketMessageType.Text,
                     true,
@@ -161,11 +166,14 @@ namespace Agar.io_Alpfa.Models
                 throw new Exception("ResetPlayer не нашел человека");
             }
 
+            leaderBoard.TrySavePlayerAsync(player.name, player.size);
+
             Players.Remove(player);
 
             string s = "Reset " + "/Game/EndGame";
 
-            await player.connection.SendAsync(
+            if (player.connection.State == WebSocketState.Open) 
+                await player.connection.SendAsync(
                 Encoding.ASCII.GetBytes(s).ToArray(),
                 WebSocketMessageType.Text,
                 true,
