@@ -40,7 +40,13 @@ namespace Agar.io_Alpfa.Controllers
             {
                 var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
                 connections.Add(webSocket);
-                await Task.Delay(300000);
+                //await Task.Delay(300000);
+
+                while (connections.Count != 0)
+                {
+                    await Task.Delay(1000);
+                }
+
             }
             else
             {

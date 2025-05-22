@@ -52,6 +52,11 @@ namespace Agar.io_Alpfa.Services
                 int killer_id = int.Parse(data.ElementAt(4));
                 model.NewSize(victim_id, killer_id);
                 model.ResetPlayer(victim_id);
+
+                if (model.Players.Count == 1)
+                {
+                    model.ResetPlayer(killer_id);
+                }
             }
             return Status.Ok;
         }

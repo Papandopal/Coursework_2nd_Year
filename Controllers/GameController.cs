@@ -103,6 +103,7 @@ public class GameController : Controller
 
                 if (status == Status.Disconnect)
                 {
+                    webSocket.Dispose();
                     return;
                 }
 
